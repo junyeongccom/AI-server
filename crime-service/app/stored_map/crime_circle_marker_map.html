@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+        <script>
+            L_NO_TOUCH = false;
+            L_DISABLE_3D = false;
+        </script>
+    
+    <style>html, body {width: 100%;height: 100%;margin: 0;padding: 0;}</style>
+    <style>#map {position:absolute;top:0;bottom:0;right:0;left:0;}</style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_48e08bc24ee104b0a5f62d4692234f73 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+        
+</head>
+<body>
+    
+    
+            <div style="position: fixed; bottom: 50px; left: 50px; z-index: 1000; background-color: white; 
+                        padding: 10px; border: 1px solid grey; border-radius: 5px; font-family: 'Malgun Gothic';">
+                <p><b>CCTV 부족비율 지도</b></p>
+                <p><i class="fa fa-circle" style="color:red"></i> 부족비율 > 1 (CCTV 부족)</p>
+                <p><i class="fa fa-circle" style="color:blue"></i> 부족비율 ≤ 1 (CCTV 충분)</p>
+                <p>* 원의 크기는 부족비율에 비례</p>
+            </div>
+            
+    
+            <div class="folium-map" id="map_48e08bc24ee104b0a5f62d4692234f73" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_48e08bc24ee104b0a5f62d4692234f73 = L.map(
+                "map_48e08bc24ee104b0a5f62d4692234f73",
+                {
+                    center: [37.5502, 126.982],
+                    crs: L.CRS.EPSG3857,
+                    zoom: 11,
+                    zoomControl: true,
+                    preferCanvas: false,
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_5251741271919cb6dd7f0edd1d7a1ad1 = L.tileLayer(
+                "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "Data by \u0026copy; \u003ca target=\"_blank\" href=\"http://openstreetmap.org\"\u003eOpenStreetMap\u003c/a\u003e, under \u003ca target=\"_blank\" href=\"http://www.openstreetmap.org/copyright\"\u003eODbL\u003c/a\u003e.", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var circle_marker_db7dffc53648e3aed58aaaa61c12bc65 = L.circleMarker(
+                [37.52629974922568, 127.05867359288398],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_db7dffc53648e3aed58aaaa61c12bc65.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>강남구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 2780대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_0b1e1c0ab0f2ca2040cbdc8a5c029456 = L.marker(
+                [37.52629974922568, 127.05867359288398],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_e408eac9a63bb15d26196a699a62d949 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uac15\ub0a8\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_0b1e1c0ab0f2ca2040cbdc8a5c029456.setIcon(div_icon_e408eac9a63bb15d26196a699a62d949);
+        
+    
+            var circle_marker_c9bd7f0ec7092937dd63b817ca065848 = L.circleMarker(
+                [37.557533180704915, 127.11519584981606],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_c9bd7f0ec7092937dd63b817ca065848.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>강동구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 773대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_20c119548ca13debe6e38ad867adb199 = L.marker(
+                [37.557533180704915, 127.11519584981606],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_7b60a54be7ad82123009b5dfbf17b639 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uac15\ub3d9\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_20c119548ca13debe6e38ad867adb199.setIcon(div_icon_7b60a54be7ad82123009b5dfbf17b639);
+        
+    
+            var circle_marker_e5b6e105e3357a1545b46409d155e08e = L.circleMarker(
+                [37.676681761199085, 126.99383903424],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_e5b6e105e3357a1545b46409d155e08e.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>강북구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 748대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_ab02fc4e6acf833427d5d5ba5eaba408 = L.marker(
+                [37.676681761199085, 126.99383903424],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_244b48b323afa8af9fe03c3c360f0196 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uac15\ubd81\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_ab02fc4e6acf833427d5d5ba5eaba408.setIcon(div_icon_244b48b323afa8af9fe03c3c360f0196);
+        
+    
+            var circle_marker_a4472cb39c7d1e6260228622e8f9b511 = L.circleMarker(
+                [37.57881087633202, 126.79575768552907],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_a4472cb39c7d1e6260228622e8f9b511.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>강서구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 884대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_a41801ed6429112ccbdba1d017021aa2 = L.marker(
+                [37.57881087633202, 126.79575768552907],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_da1dcdcd7d9cfda00210e213d307f75a = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uac15\uc11c\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_a41801ed6429112ccbdba1d017021aa2.setIcon(div_icon_da1dcdcd7d9cfda00210e213d307f75a);
+        
+    
+            var circle_marker_f18d24236b206b8d21979436b8be940e = L.circleMarker(
+                [37.473856492692086, 126.98367668291802],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_f18d24236b206b8d21979436b8be940e.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>관악구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1496대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_93d5c8060bd77064762c14b3f51727d3 = L.marker(
+                [37.473856492692086, 126.98367668291802],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_0ab6533f150af23739935d0983021c92 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uad00\uc545\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_93d5c8060bd77064762c14b3f51727d3.setIcon(div_icon_0ab6533f150af23739935d0983021c92);
+        
+    
+            var circle_marker_c9a91eb608d1d9db11247d1602139d3b = L.circleMarker(
+                [37.56906425519017, 127.08068541280403],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_c9a91eb608d1d9db11247d1602139d3b.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>광진구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 707대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_6ee463b6d3348a30d0c80cb4a6d7bcff = L.marker(
+                [37.56906425519017, 127.08068541280403],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_bb6d52bbfe1af0f12fc79224e4f8bd2d = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uad11\uc9c4\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_6ee463b6d3348a30d0c80cb4a6d7bcff.setIcon(div_icon_bb6d52bbfe1af0f12fc79224e4f8bd2d);
+        
+    
+            var circle_marker_d0976f90333728287836c2e4d97fbf24 = L.circleMarker(
+                [37.50548972232896, 126.82688081517314],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_d0976f90333728287836c2e4d97fbf24.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>구로구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1561대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_7166b0868c8b465b1d568151240f1b2c = L.marker(
+                [37.50548972232896, 126.82688081517314],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_f4d6f3901fc6659faac58f4cf331aa39 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uad6c\ub85c\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_7166b0868c8b465b1d568151240f1b2c.setIcon(div_icon_f4d6f3901fc6659faac58f4cf331aa39);
+        
+    
+            var circle_marker_1848f2dd12d4854447e223459138f715 = L.circleMarker(
+                [37.47753842789901, 126.90156094129895],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_1848f2dd12d4854447e223459138f715.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>금천구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1015대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_57108eba3db6162cb88cb4f44084b89c = L.marker(
+                [37.47753842789901, 126.90156094129895],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_0ea29e3c09feaf85287bc70fa7f0afb8 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uae08\ucc9c\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_57108eba3db6162cb88cb4f44084b89c.setIcon(div_icon_0ea29e3c09feaf85287bc70fa7f0afb8);
+        
+    
+            var circle_marker_0bffb99999970fcc9d05135135fe1111 = L.circleMarker(
+                [37.69359534202034, 127.0838752703195],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_0bffb99999970fcc9d05135135fe1111.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>노원구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1265대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_3f88819296f8c113062be863c5d97040 = L.marker(
+                [37.69359534202034, 127.0838752703195],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_6d1ac41e4b4fe69b030561ce0523cfac = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\ub178\uc6d0\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_3f88819296f8c113062be863c5d97040.setIcon(div_icon_6d1ac41e4b4fe69b030561ce0523cfac);
+        
+    
+            var circle_marker_a3ba421f2db4c04a9cafb8cb32ea27a7 = L.circleMarker(
+                [37.68423857084347, 127.05288479710485],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_a3ba421f2db4c04a9cafb8cb32ea27a7.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>도봉구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 485대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_5f00719219ce305b69667af512ec91db = L.marker(
+                [37.68423857084347, 127.05288479710485],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_f505fd3917caf55dbdb5cf23978ea34a = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\ub3c4\ubd09\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_5f00719219ce305b69667af512ec91db.setIcon(div_icon_f505fd3917caf55dbdb5cf23978ea34a);
+        
+    
+            var circle_marker_d6c3ab5218adb4c2d275cc5cfd241d5c = L.circleMarker(
+                [37.57524616245249, 127.02527254528003],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_d6c3ab5218adb4c2d275cc5cfd241d5c.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>동대문구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1294대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_58dcd185a670502331fc4663b36185c3 = L.marker(
+                [37.57524616245249, 127.02527254528003],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_5bff42b2c11fb19074fa287c247661e8 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\ub3d9\ub300\ubb38\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_58dcd185a670502331fc4663b36185c3.setIcon(div_icon_5bff42b2c11fb19074fa287c247661e8);
+        
+    
+            var circle_marker_283531e00356df3502f2557315e89490 = L.circleMarker(
+                [37.509314966770326, 126.98223807916081],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_283531e00356df3502f2557315e89490.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>동작구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1091대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_bac5c086fc460845c9d29760d9454117 = L.marker(
+                [37.509314966770326, 126.98223807916081],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_16424e17d9a9df944f64cdf9fcda162b = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\ub3d9\uc791\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_bac5c086fc460845c9d29760d9454117.setIcon(div_icon_16424e17d9a9df944f64cdf9fcda162b);
+        
+    
+            var circle_marker_546740f510d20bb1ce94575e63eafe9d = L.circleMarker(
+                [37.57409700522574, 126.90522065831053],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_546740f510d20bb1ce94575e63eafe9d.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>마포구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 574대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_1975d67fab39fefb3dec3a55ea4e42c8 = L.marker(
+                [37.57409700522574, 126.90522065831053],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_78f8e6a63aec3a438b5b134b13d60fda = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\ub9c8\ud3ec\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_1975d67fab39fefb3dec3a55ea4e42c8.setIcon(div_icon_78f8e6a63aec3a438b5b134b13d60fda);
+        
+    
+            var circle_marker_a5dc526f1fd3b7f6f025f258b9491731 = L.circleMarker(
+                [37.60508692737045, 126.9524752030572],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_a5dc526f1fd3b7f6f025f258b9491731.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>서대문구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 962대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_9920e686cb07adf7a01461607d2c1f15 = L.marker(
+                [37.60508692737045, 126.9524752030572],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_c74bc01482e250a1a5449fd4e774414e = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc11c\ub300\ubb38\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_9920e686cb07adf7a01461607d2c1f15.setIcon(div_icon_c74bc01482e250a1a5449fd4e774414e);
+        
+    
+            var circle_marker_fb7918b77bed7f5e1109220aa8545663 = L.circleMarker(
+                [37.52503988289669, 127.01397119667513],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_fb7918b77bed7f5e1109220aa8545663.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>서초구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1930대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_9edbead3f9525d9f6258b88ef8d3d262 = L.marker(
+                [37.52503988289669, 127.01397119667513],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_409480123fffaf6b7fac94af7b726b33 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc11c\ucd08\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_9edbead3f9525d9f6258b88ef8d3d262.setIcon(div_icon_409480123fffaf6b7fac94af7b726b33);
+        
+    
+            var circle_marker_1b82098eaa9b6b04045b7bc8503e3f0d = L.circleMarker(
+                [37.568943552237734, 127.02547266349976],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_1b82098eaa9b6b04045b7bc8503e3f0d.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>성동구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1062대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_a43ee92bc7d7e6d9811460e48e0f6a0c = L.marker(
+                [37.568943552237734, 127.02547266349976],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_19fda3dd5bc0f15efe09687f47155e9d = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc131\ub3d9\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_a43ee92bc7d7e6d9811460e48e0f6a0c.setIcon(div_icon_19fda3dd5bc0f15efe09687f47155e9d);
+        
+    
+            var circle_marker_18d8d1bef32117ebca9193066ace8d05 = L.circleMarker(
+                [37.62859715400388, 126.977175406416],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_18d8d1bef32117ebca9193066ace8d05.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>성북구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1464대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_4c6746703f0bc3bb0406766bedc85556 = L.marker(
+                [37.62859715400388, 126.977175406416],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_0fa4abe0d665b8103f8bac9c0e7e9f59 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc131\ubd81\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_4c6746703f0bc3bb0406766bedc85556.setIcon(div_icon_0fa4abe0d665b8103f8bac9c0e7e9f59);
+        
+    
+            var circle_marker_0582f9b62b78c450d9ea606af0756820 = L.circleMarker(
+                [37.522279423505026, 127.0690698130372],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_0582f9b62b78c450d9ea606af0756820.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>송파구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 618대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_38a795c0164d70daa628e787b451d6cf = L.marker(
+                [37.522279423505026, 127.0690698130372],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_27211b814b8b831ec7d2edf1fc82ad86 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc1a1\ud30c\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_38a795c0164d70daa628e787b451d6cf.setIcon(div_icon_27211b814b8b831ec7d2edf1fc82ad86);
+        
+    
+            var circle_marker_918cad5386f217cb93e72fe2cb513c8b = L.circleMarker(
+                [37.53788078753248, 126.8242331426722],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_918cad5386f217cb93e72fe2cb513c8b.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>양천구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 2034대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_bf47797d2749c21678a5c8881c3161a7 = L.marker(
+                [37.53788078753248, 126.8242331426722],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_6301406ae4fc0f9a491ed6591b6b51dd = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc591\ucc9c\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_bf47797d2749c21678a5c8881c3161a7.setIcon(div_icon_6301406ae4fc0f9a491ed6591b6b51dd);
+        
+    
+            var circle_marker_393cfeae761b3fc2cb857d7008b22d4c = L.circleMarker(
+                [37.547373974997114, 126.89184663862764],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_393cfeae761b3fc2cb857d7008b22d4c.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>영등포구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 904대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_16dd7416e9100c3ac2252b53ae452099 = L.marker(
+                [37.547373974997114, 126.89184663862764],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_3269a79e7dad2ba3cb64cfad546f5c03 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc601\ub4f1\ud3ec\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_16dd7416e9100c3ac2252b53ae452099.setIcon(div_icon_3269a79e7dad2ba3cb64cfad546f5c03);
+        
+    
+            var circle_marker_17e23dc3ebbe254d51ef009eb5245eac = L.circleMarker(
+                [37.54118048964762, 127.01070894177482],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_17e23dc3ebbe254d51ef009eb5245eac.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>용산구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1624대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_eb09f43a034cc448fc47c43dc008de69 = L.marker(
+                [37.54118048964762, 127.01070894177482],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_1f845cb0851e8e88246966ffe962bf3d = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc6a9\uc0b0\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_eb09f43a034cc448fc47c43dc008de69.setIcon(div_icon_1f845cb0851e8e88246966ffe962bf3d);
+        
+    
+            var circle_marker_ca8753a2accb4ed520f9dd8d61eedc99 = L.circleMarker(
+                [37.62949634786888, 126.9738864128702],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_ca8753a2accb4ed520f9dd8d61eedc99.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>은평구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1873대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_35b6ca94a49a63f4b9216815124315de = L.marker(
+                [37.62949634786888, 126.9738864128702],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_a5069ce82a724800e097885e9c362167 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc740\ud3c9\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_35b6ca94a49a63f4b9216815124315de.setIcon(div_icon_a5069ce82a724800e097885e9c362167);
+        
+    
+            var circle_marker_a3947365586437056e8e856babdc7ef0 = L.circleMarker(
+                [37.62949634786888, 126.9738864128702],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_a3947365586437056e8e856babdc7ef0.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>종로구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 1002대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_e7057d6badcc8d37e55997642843c83d = L.marker(
+                [37.62949634786888, 126.9738864128702],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_ca72ca9b60c378bc8f9106b0a08e9269 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc885\ub85c\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_e7057d6badcc8d37e55997642843c83d.setIcon(div_icon_ca72ca9b60c378bc8f9106b0a08e9269);
+        
+    
+            var circle_marker_b495cd795cd0c8cd7056af5631c93123 = L.circleMarker(
+                [37.568943552237734, 127.02547266349976],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_b495cd795cd0c8cd7056af5631c93123.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>중구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 671대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_79ed9f9e584a5b8536359b430aefcd6a = L.marker(
+                [37.568943552237734, 127.02547266349976],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_c5624e3cf96d5e501139f1ab815fc1b3 = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc911\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_79ed9f9e584a5b8536359b430aefcd6a.setIcon(div_icon_c5624e3cf96d5e501139f1ab815fc1b3);
+        
+    
+            var circle_marker_2a6672c085ec6070c8a2fe21ec0e6e3d = L.circleMarker(
+                [37.61283660342313, 127.07351243825278],
+                {"bubblingMouseEvents": true, "color": "blue", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "blue", "fillOpacity": 0.6, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 5, "stroke": true, "weight": 3}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            circle_marker_2a6672c085ec6070c8a2fe21ec0e6e3d.bindTooltip(
+                `<div>
+                     
+                    <div style="font-family: 'Malgun Gothic'; font-size: 12px;">
+                    <b>중랑구</b><br>
+                    범죄 지수: 0.00<br>
+                    CCTV 설치 대수: 660대<br>
+                    부족 비율: 0.00
+                    </div>
+                    
+                 </div>`,
+                {"sticky": true}
+            );
+        
+    
+            var marker_ee0eb29b9dd635cd924af6704bf5a462 = L.marker(
+                [37.61283660342313, 127.07351243825278],
+                {}
+            ).addTo(map_48e08bc24ee104b0a5f62d4692234f73);
+        
+    
+            var div_icon_30413e7f44bc4189214c0e49ef25557d = L.divIcon({"className": "empty", "html": "\u003cdiv style=\"font-size: 10px; font-weight: bold;\"\u003e\uc911\ub791\uad6c\u003c/div\u003e", "iconSize": [0, 0]});
+            marker_ee0eb29b9dd635cd924af6704bf5a462.setIcon(div_icon_30413e7f44bc4189214c0e49ef25557d);
+        
+</script>
+</html>

@@ -1,0 +1,73 @@
+services:
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    ports:
+      - "9000:9000"
+    environment:
+      - TITANIC_SERVICE_URL=http://titanic-service:9001
+      - CRIME_SERVICE_URL=http://crime-service:9002
+      - NLP_SERVICE_URL=http://nlp-service:9004
+    networks:
+      - ai-network
+
+  titanic-service:
+    build:
+      context: ./titanic-service
+      dockerfile: Dockerfile
+    container_name: titanic
+    ports:
+      - "9001:9001"
+    networks:
+      - ai-network
+
+  crime-service:
+    build:
+      context: ./crime-service
+      dockerfile: Dockerfile
+    container_name: crime
+    ports:
+      - "9002:9002"
+    networks:
+      - ai-network
+    volumes:
+      - /c/Users/bitcamp/Documents/demo/v2/ai-server/crime-service/app/stored_map:/app/stored_map
+      - /c/Users/bitcamp/Documents/demo/v2/ai-server/crime-service/app/up_data:/app/up_data
+      - /c/Users/bitcamp/Documents/demo/v2/ai-server/crime-service/app/stored_data:/app/stored_data
+
+  # 테스트용 NLP 서비스 (7000 포트)
+  nlp-test-service:
+    build:
+      context: ./nlp-service
+      dockerfile: Dockerfile
+    container_name: nlp-test
+    ports:
+      - "7000:7000"
+    networks:
+      - ai-network
+    volumes:
+      - ./nlp-service/app/original:/app/original
+      - ./nlp-service/app/output:/app/output
+    command: ["uvicorn", "app.tests.test_samsung_report:app", "--host", "0.0.0.0", "--port", "7000"]
+
+  # 운영용 NLP 서비스 (9004 포트)
+  nlp-service:
+    build:
+      context: ./nlp-service
+      dockerfile: Dockerfile
+    container_name: nlp
+    ports:
+      - "9004:9004"
+    networks:
+      - ai-network
+    volumes:
+      - ./nlp-service/app/original:/app/original
+      - ./nlp-service/app/output:/app/output
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9004"]
+
+networks:
+  ai-network:
+    driver: bridge
+  
