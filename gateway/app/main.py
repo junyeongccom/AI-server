@@ -1,8 +1,8 @@
-from fastapi import FastAPI, APIRouter, Request, HTTPException
+from fastapi import FastAPI, APIRouter, Request, HTTPException, File, UploadFile, Form, Depends, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import httpx
-from typing import Dict, Any, Literal
+from typing import Dict, Any, Literal, Optional, Annotated, Union
 import os
 from dotenv import load_dotenv
 import logging
@@ -70,7 +70,7 @@ async def proxy_get(
     request: Request
 ):
     try:
-        logger.info(f"📥 GET 요청: 서비스={service.value}, 경로={path}")
+        logger.info(f"GET 요청: {service.value}/{path}")
         factory = ServiceProxyFactory(service_type=service)
         response = await factory.request(
             method="GET",
@@ -80,106 +80,156 @@ async def proxy_get(
         
         if response.status_code == 200:
             try:
-                # JSON 응답 처리
-                json_content = response.json()
-                logger.info(f"✅ JSON 응답 반환: {json_content}")
-                return JSONResponse(content=json_content, status_code=response.status_code)
-            except Exception as json_error:
-                # JSON이 아닌 응답 처리
-                logger.warning(f"⚠️ JSON이 아닌 응답: {str(json_error)}")
+                return JSONResponse(content=response.json(), status_code=response.status_code)
+            except Exception:
                 return JSONResponse(
                     content={"message": "성공", "raw_response": response.text[:1000]},
                     status_code=200
                 )
         else:
-            error_msg = f"⚠️ 서비스 오류: HTTP {response.status_code}"
-            logger.error(error_msg)
-            logger.error(f"📄 응답 내용: {response.text}")
             return JSONResponse(
-                content={"detail": error_msg, "response": response.text},
+                content={"error": f"서비스 오류: HTTP {response.status_code}", "details": response.text[:500]},
                 status_code=response.status_code
             )
     except Exception as e:
-        error_msg = f"❌ 게이트웨이 오류: {str(e)}"
-        logger.error(error_msg)
-        logger.error(traceback.format_exc())
+        logger.error(f"게이트웨이 오류: {str(e)}")
         return JSONResponse(
-            content={"detail": error_msg},
+            content={"error": str(e)},
             status_code=500
         )
 
-# POST
-@gateway_router.post("/{service}/{path:path}", summary="POST 프록시")
+# 통합 POST 요청 처리 (JSON 또는 파일 업로드)
+@gateway_router.post(
+    "/{service}/{path:path}", 
+    summary="통합 POST 프록시 (JSON 또는 파일 업로드)", 
+    description="하나의 엔드포인트에서 JSON 요청과 파일 업로드를 모두 처리합니다."
+)
 async def proxy_post(
     service: ServiceType, 
-    path: str, 
-    request_body: FinanceRequest,
-    request: Request
+    path: str,
+    request: Request,
+    file: UploadFile = File(None, description="업로드할 파일 (선택 사항)"),
+    json_data: Optional[str] = Form(None, description="JSON 형식의 데이터 (선택 사항)")
 ):
-    print(f"🌈Received request for service: {service}, path: {path}")
-    factory = ServiceProxyFactory(service_type=service)
-    body = request_body.model_dump_json()
-    print(f"Request body: {body}")
-    response = await factory.request(
-        method="POST",
-        path=path,
-        headers=request.headers.raw,
-        body=body
-    )
-    if response.status_code == 200:
-        try:
+    try:
+        logger.info(f"POST 요청: {service.value}/{path}")
+        factory = ServiceProxyFactory(service_type=service)
+        headers = dict(request.headers.items())
+        
+        # 파일 업로드 처리
+        if file and file.filename:
+            # 파일 데이터 준비
+            file_content = await file.read()
+            await file.seek(0)
+            files = {"file": (file.filename, file_content, file.content_type)}
+            
+            # JSON 데이터 준비 (있는 경우)
+            form_data = {}
+            if json_data:
+                try:
+                    form_data = json.loads(json_data)
+                except:
+                    form_data = {"data": json_data}
+            
+            # 파일 업로드 요청 전송
+            response = await factory.request(
+                method="POST",
+                path=path,
+                headers=headers,
+                files=files,
+                form_data=form_data
+            )
+        else:
+            # JSON 요청 처리
+            body = None
+            
+            # Form에서 JSON 데이터가 전송된 경우
+            if json_data:
+                try:
+                    body = json.loads(json_data)
+                except:
+                    body = {"data": json_data}
+                body = json.dumps(body)
+            else:
+                # 요청 본문에서 JSON 데이터 가져오기
+                body = await request.body()
+                if not body:
+                    body = b"{}"
+            
+            # JSON 요청 전송
+            response = await factory.request(
+                method="POST",
+                path=path,
+                headers=headers,
+                body=body
+            )
+        
+        # 응답 처리
+        if response.status_code < 400:
+            try:
+                return JSONResponse(content=response.json(), status_code=response.status_code)
+            except:
+                return JSONResponse(
+                    content={"message": "성공", "raw_response": response.text[:1000]},
+                    status_code=response.status_code
+                )
+        else:
             return JSONResponse(
-                content=response.json(),
+                content={"error": f"서비스 오류: HTTP {response.status_code}", "details": response.text[:500]},
                 status_code=response.status_code
             )
-        except json.JSONDecodeError:
-            # 응답이 JSON이 아닌 경우
-            return JSONResponse(
-                content={"detail": "⚠️Invalid JSON response from service"},
-                status_code=500
-            )
-    else:
-        # 에러 응답 처리
+            
+    except Exception as e:
+        logger.error(f"게이트웨이 오류: {str(e)}")
         return JSONResponse(
-            content={"detail": f"Service error: {response.text}"},
-            status_code=response.status_code
+            content={"error": str(e)},
+            status_code=500
         )
 
 # PUT
 @gateway_router.put("/{service}/{path:path}", summary="PUT 프록시")
 async def proxy_put(service: ServiceType, path: str, request: Request):
-    factory = ServiceProxyFactory(service_type=service)
-    response = await factory.request(
-        method="PUT",
-        path=path,
-        headers=request.headers.raw,
-        body=await request.body()
-    )
-    return JSONResponse(content=response.json(), status_code=response.status_code)
+    try:
+        factory = ServiceProxyFactory(service_type=service)
+        response = await factory.request(
+            method="PUT",
+            path=path,
+            headers=request.headers.raw,
+            body=await request.body()
+        )
+        return JSONResponse(content=response.json(), status_code=response.status_code)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # DELETE
 @gateway_router.delete("/{service}/{path:path}", summary="DELETE 프록시")
 async def proxy_delete(service: ServiceType, path: str, request: Request):
-    factory = ServiceProxyFactory(service_type=service)
-    response = await factory.request(
-        method="DELETE",
-        path=f"{service}/{path}",
-        headers=request.headers.raw,
-        body=await request.body()
-    )
-    return JSONResponse(content=response.json(), status_code=response.status_code)
+    try:
+        factory = ServiceProxyFactory(service_type=service)
+        response = await factory.request(
+            method="DELETE",
+            path=path,
+            headers=request.headers.raw,
+            body=await request.body()
+        )
+        return JSONResponse(content=response.json(), status_code=response.status_code)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # PATCH
 @gateway_router.patch("/{service}/{path:path}", summary="PATCH 프록시")
 async def proxy_patch(service: ServiceType, path: str, request: Request):
-    factory = ServiceProxyFactory(service_type=service)
-    response = await factory.request(
-        method="PATCH",
-        path=path,
-        headers=request.headers.raw,
-        body=await request.body()
-    )
-    return JSONResponse(content=response.json(), status_code=response.status_code)
+    try:
+        factory = ServiceProxyFactory(service_type=service)
+        response = await factory.request(
+            method="PATCH",
+            path=path,
+            headers=request.headers.raw,
+            body=await request.body()
+        )
+        return JSONResponse(content=response.json(), status_code=response.status_code)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # ✅ 메인 라우터 등록
 app.include_router(gateway_router)

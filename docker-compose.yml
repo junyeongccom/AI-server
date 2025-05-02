@@ -10,6 +10,7 @@ services:
       - TITANIC_SERVICE_URL=http://titanic-service:9001
       - CRIME_SERVICE_URL=http://crime-service:9002
       - NLP_SERVICE_URL=http://nlp-service:9004
+      - TF_SERVICE_URL=http://tf-service:9005
     networks:
       - ai-network
 
@@ -66,6 +67,33 @@ services:
       - ./nlp-service/app/original:/app/original
       - ./nlp-service/app/output:/app/output
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9004"]
+
+  # 테스트용 TF 서비스 (7070 포트)
+  tf-test-service:
+    build:
+      context: ./tf-service
+      dockerfile: Dockerfile
+    container_name: tf-test
+    ports:
+      - "7070:7070"
+    networks:
+      - ai-network
+    command: ["uvicorn", "app.tests.test_calc:app", "--host", "0.0.0.0", "--port", "7070"]
+
+  # 운영용 TF 서비스 (9005 포트)
+  tf-service:
+    build:
+      context: ./tf-service
+      dockerfile: Dockerfile
+    container_name: tf
+    ports:
+      - "9005:9005"
+    networks:
+      - ai-network
+    volumes:
+      - ./tf-service/uploads:/app/uploads
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9005"]
+
 
 networks:
   ai-network:

@@ -20,4 +20,5 @@ scikit-learn==1.4.0
 pandas==2.1.0
 numpy==1.26.0
 httpx==0.26.0
-folium 
+folium
+python-multipart==0.0.9 
