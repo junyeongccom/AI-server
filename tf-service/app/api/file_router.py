@@ -1,10 +1,11 @@
+import cv2
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
 import shutil
 import os
 import logging
 
-app = APIRouter()
+router = APIRouter()
 logger = logging.getLogger("tf_main")
 
 # 업로드 디렉토리 절대 경로로 설정
@@ -12,7 +13,26 @@ UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 logger.info(f"파일 업로드 디렉토리: {UPLOAD_DIR}")
 
-@app.post("/upload/")
+@router.get("/mosaic")
+async def mosaic_file():
+    girl = './data/girl.jpg'
+    cascade = './data/haarcascade_frontalface_alt.xml'
+    cascade = cv2.CascadeClassifier(cascade)
+    img = cv2.imread(girl)
+    face = cascade.detectMultiScale(img, minSize=(150,150))
+    if len(face) == 0:
+        print('얼굴인식 실패')
+        quit()
+    for(x,y,w,h) in face:
+        print(f'얼굴의 좌표 = {x}, {y}, {w}, {h}')
+        red = (0,0,255)
+        cv2.rectangle(img, (x, y), (x+w, y+h), red, thickness=20)
+    cv2.imwrite('./saved_data/girl-face.png',img)
+    cv2.imshow('./saved_data/girl-face',img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+@router.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     file_location = os.path.join(UPLOAD_DIR, file.filename)
     logger.info(f"파일 업로드 시작: {file.filename}, 저장 위치: {file_location}")

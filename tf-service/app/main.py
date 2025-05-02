@@ -3,7 +3,7 @@ TF 서비스 메인 애플리케이션 진입점
 """
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.file_router import app as file_router
+from app.api.file_router import router as file_router
 import uvicorn
 import logging
 import traceback
@@ -21,14 +21,23 @@ logger.info(f"🚀 TF 서비스 시작")
 logger.info(f"📂 현재 작업 디렉토리: {os.getcwd()}")
 logger.info(f"📂 파일 목록: {os.listdir()}")
 
-# uploads 폴더 생성
+# 필요한 디렉토리 생성
 uploads_dir = "uploads"
+output_dir = "output"
 logger.info(f"📂 uploads 폴더: {os.path.exists(uploads_dir)} (생성됨: {os.makedirs(uploads_dir, exist_ok=True) or True})")
+logger.info(f"📂 output 폴더: {os.path.exists(output_dir)} (생성됨: {os.makedirs(output_dir, exist_ok=True) or True})")
+
+# 의존성 확인
+try:
+    import cv2
+    logger.info(f"✅ OpenCV 버전: {cv2.__version__}")
+except ImportError:
+    logger.warning(f"⚠️ OpenCV가 설치되어 있지 않습니다. 얼굴 인식 기능이 동작하지 않을 수 있습니다.")
 
 # FastAPI 앱 생성
 app = FastAPI(
-    title="TensorFlow Service API",
-    description="TensorFlow 기반 계산 및 머신러닝 서비스",
+    title="TensorFlow & Computer Vision Service API",
+    description="TensorFlow 기반 계산 및 컴퓨터 비전 서비스",
     version="1.0.0",
 )
 
@@ -54,25 +63,9 @@ async def log_requests(request: Request, call_next):
         logger.error(traceback.format_exc())
         raise
 
-# 라우터 등록 - prefix를 /tf로 설정
-logger.info("🔄 라우터 등록 (prefix='/tf')")
-app.include_router(file_router, prefix="/tf")
-
-# 루트 경로 핸들러
-@app.get("/", tags=["상태 확인"])
-async def root():
-    """
-    서비스 상태 확인 엔드포인트
-    """
-    logger.info("📡 상태 확인 요청 수신")
-    return {
-        "status": "online",
-        "service": "TensorFlow Service",
-        "version": "1.0.0",
-        "endpoints": {
-            "파일 업로드": "/tf/upload"
-        }
-    }
+# 파일 업로드 라우터 등록
+logger.info("🔄 파일 업로드 라우터 등록 (prefix='/tf')")
+app.include_router(file_router, prefix="/tf", tags=["파일 업로드"])
 
 # 직접 실행 시 (개발 환경)
 if __name__ == "__main__":
