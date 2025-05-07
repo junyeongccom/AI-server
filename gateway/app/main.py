@@ -1,7 +1,7 @@
 from fastapi import FastAPI, APIRouter, Request, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Union, Tuple
 from dotenv import load_dotenv
 import logging
 import sys
@@ -56,6 +56,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ✅ 헤더 변환 함수 추가
+def convert_headers(headers: Union[List[Tuple[bytes, bytes]], Dict[str, str]]) -> Dict[str, str]:
+    """
+    헤더를 Dict[str, str] 형태로 변환하는 유틸리티 함수
+    
+    Args:
+        headers: [(b"key", b"value")] 형태의 List 또는 Dict[str, str]
+        
+    Returns:
+        Dict[str, str]: 변환된 헤더 딕셔너리
+    """
+    if isinstance(headers, list):
+        return {k.decode(): v.decode() for k, v in headers}
+    return headers
+
 # ✅ 메인 라우터 생성
 gateway_router = APIRouter(prefix="/ai/v1", tags=["Gateway API"])
 
@@ -70,10 +85,14 @@ async def proxy_get(
     try:
         logger.info(f"GET 요청: {service.value}/{path}")
         factory = ServiceProxyFactory(service_type=service)
+        
+        # 헤더를 딕셔너리로 변환
+        headers_dict = convert_headers(request.headers.raw)
+        
         response = await factory.request(
             method="GET",
             path=path,
-            headers=request.headers.raw
+            headers=headers_dict
         )
         
         if response.status_code == 200:
@@ -191,10 +210,13 @@ async def proxy_post(
 async def proxy_put(service: ServiceType, path: str, request: Request):
     try:
         factory = ServiceProxyFactory(service_type=service)
+        # 헤더를 딕셔너리로 변환
+        headers_dict = convert_headers(request.headers.raw)
+        
         response = await factory.request(
             method="PUT",
             path=path,
-            headers=request.headers.raw,
+            headers=headers_dict,
             body=await request.body()
         )
         return JSONResponse(content=response.json(), status_code=response.status_code)
@@ -206,10 +228,13 @@ async def proxy_put(service: ServiceType, path: str, request: Request):
 async def proxy_delete(service: ServiceType, path: str, request: Request):
     try:
         factory = ServiceProxyFactory(service_type=service)
+        # 헤더를 딕셔너리로 변환
+        headers_dict = convert_headers(request.headers.raw)
+        
         response = await factory.request(
             method="DELETE",
             path=path,
-            headers=request.headers.raw,
+            headers=headers_dict,
             body=await request.body()
         )
         return JSONResponse(content=response.json(), status_code=response.status_code)
@@ -221,10 +246,13 @@ async def proxy_delete(service: ServiceType, path: str, request: Request):
 async def proxy_patch(service: ServiceType, path: str, request: Request):
     try:
         factory = ServiceProxyFactory(service_type=service)
+        # 헤더를 딕셔너리로 변환
+        headers_dict = convert_headers(request.headers.raw)
+        
         response = await factory.request(
             method="PATCH",
             path=path,
-            headers=request.headers.raw,
+            headers=headers_dict,
             body=await request.body()
         )
         return JSONResponse(content=response.json(), status_code=response.status_code)

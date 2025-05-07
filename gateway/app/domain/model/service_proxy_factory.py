@@ -1,4 +1,4 @@
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List, Union
 from fastapi import HTTPException, status
 import httpx
 import logging
@@ -25,7 +25,7 @@ class ServiceProxyFactory:
         self,
         method: str,
         path: str,
-        headers: Dict[str, str] = None,
+        headers: Union[List[Tuple[bytes, bytes]], Dict[str, str]] = None,
         body: Any = None,
         files: Dict[str, Tuple[str, bytes, str]] = None,
         form_data: Dict[str, str] = None
@@ -35,6 +35,11 @@ class ServiceProxyFactory:
 
         request_headers = {}
         if headers:
+            # headers가 list 타입이면 dict로 변환
+            if isinstance(headers, list):
+                headers = {k.decode(): v.decode() for k, v in headers}
+            
+            # 필터링된 헤더 생성
             for k, v in headers.items():
                 if k.lower() not in ['host', 'content-length']:
                     request_headers[k] = v
