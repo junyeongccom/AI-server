@@ -15,6 +15,11 @@ UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 logger.info(f"파일 업로드 디렉토리: {UPLOAD_DIR}")
 
+# 출력 디렉토리 (모자이크 파일) 절대 경로 설정
+OUTPUT_DIR = os.path.join(os.getcwd(), "output")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+logger.info(f"모자이크 결과 디렉토리: {OUTPUT_DIR}")
+
 # 캐스케이드 파일 경로 설정
 CASCADE_PATH = os.path.join(os.getcwd(), "app", "data", "haarcascade_frontalface_alt.xml")
 if not os.path.exists(CASCADE_PATH):
@@ -52,7 +57,7 @@ async def upload_file(file: UploadFile = File(...)):
             try:
                 # 파일 이름과 확장자 분리
                 filename, extension = os.path.splitext(file.filename)
-                mosaic_file_location = os.path.join(UPLOAD_DIR, f"{filename}_mosaic{extension}")
+                mosaic_file_location = os.path.join(OUTPUT_DIR, f"{filename}_mosaic{extension}")
                 
                 # 얼굴 감지 및 모자이크 처리
                 result = mosaic_faces(file_location, mosaic_file_location)
@@ -129,8 +134,9 @@ def mosaic_faces(input_path, output_path, mosaic_size=15):
         logger.info(f"감지된 얼굴 수: {faces_detected}")
         
         if faces_detected == 0:
-            # 얼굴이 감지되지 않은 경우 원본 이미지 복사
+            # 얼굴이 감지되지 않은 경우 빈 이미지 생성 방지
             cv2.imwrite(output_path, img)
+            logger.info(f"얼굴이 감지되지 않아 원본 이미지를 출력 디렉토리에 복사: {output_path}")
             return {"success": True, "error": "감지된 얼굴이 없습니다", "faces_detected": 0}
         
         # 이미지 복사본 생성
@@ -153,6 +159,7 @@ def mosaic_faces(input_path, output_path, mosaic_size=15):
         
         # 결과 이미지 저장
         cv2.imwrite(output_path, result_img)
+        logger.info(f"모자이크 처리된 이미지 저장 완료: {output_path}")
         
         return {
             "success": True,

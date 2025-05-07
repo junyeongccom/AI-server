@@ -92,6 +92,7 @@ services:
       - ai-network
     volumes:
       - ./tf-service/uploads:/app/uploads
+      - ./tf-service/output:/app/output
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9005"]
 
 
