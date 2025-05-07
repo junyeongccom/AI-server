@@ -114,7 +114,9 @@ async def proxy_post(
     try:
         logger.info(f"POST 요청: {service.value}/{path}")
         factory = ServiceProxyFactory(service_type=service)
-        headers = dict(request.headers.items())
+        # ✅ Content-Length, Host 헤더 제외
+        headers = {k: v for k, v in request.headers.items() if k.lower() not in ['content-length', 'host']}
+
         
         # 파일 업로드 처리
         if file and file.filename:
@@ -124,7 +126,7 @@ async def proxy_post(
             files = {"file": (file.filename, file_content, file.content_type)}
             
             # JSON 데이터 준비 (있는 경우)
-            form_data = {}
+            form_data = None  # ← None으로 초기화
             if json_data:
                 try:
                     form_data = json.loads(json_data)
@@ -137,7 +139,7 @@ async def proxy_post(
                 path=path,
                 headers=headers,
                 files=files,
-                form_data=form_data
+                form_data=form_data  # ← None이면 data를 아예 안 보냄
             )
         else:
             # JSON 요청 처리
