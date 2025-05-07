@@ -1,5 +1,14 @@
 FROM python:3.11-slim
 
+# Install system dependencies for OpenCV
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /app
 
@@ -11,6 +20,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
+
+# Create required directories
+RUN mkdir -p /app/uploads /app/output /app/app/data
 
 # Expose port
 EXPOSE 9005
