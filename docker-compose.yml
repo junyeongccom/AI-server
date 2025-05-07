@@ -93,6 +93,7 @@ services:
     volumes:
       - ./tf-service/uploads:/app/uploads
       - ./tf-service/output:/app/output
+      - ./tf-service/mnist:/mnist
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9005"]
 
 

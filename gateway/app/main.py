@@ -1,16 +1,14 @@
-from fastapi import FastAPI, APIRouter, Request, HTTPException, File, UploadFile, Form, Depends, Body
+from fastapi import FastAPI, APIRouter, Request, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import httpx
-from typing import Dict, Any, Literal, Optional, Annotated, Union
-import os
+from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 import logging
 import sys
 from contextlib import asynccontextmanager
 import json
 from pydantic import BaseModel
-import traceback
+
 
 from app.domain.model.service_proxy_factory import ServiceProxyFactory
 from app.domain.model.service_type import ServiceType
