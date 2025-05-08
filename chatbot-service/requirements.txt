@@ -2,7 +2,5 @@ fastapi
 uvicorn
 torch
 transformers
-kobert-transformers
-sentencepiece
 pydantic
 python-dotenv
