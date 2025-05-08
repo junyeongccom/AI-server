@@ -130,10 +130,27 @@ async def proxy_post(
 ):
     try:
         logger.info(f"POST 요청: {service.value}/{path}")
+        
+        # 경로 정규화 (중복 슬래시 제거)
+        clean_path = path
+        while '//' in clean_path:
+            clean_path = clean_path.replace('//', '/')
+        
+        # 챗봇 서비스의 경우 경로 수정 (이전 코드 제거)
+        if service == ServiceType.CHATBOT:
+            logger.info(f"챗봇 서비스 경로: {clean_path}")
+        
         factory = ServiceProxyFactory(service_type=service)
-        # ✅ Content-Length, Host 헤더 제외
+        
+        # 헤더 처리
         headers = {k: v for k, v in request.headers.items() if k.lower() not in ['content-length', 'host']}
-
+        
+        # 챗봇 서비스의 경우 Content-Type 헤더를 명시적으로 설정
+        if service == ServiceType.CHATBOT:
+            # multipart/form-data를 application/json으로 변경
+            headers = {k: v for k, v in headers.items() if k.lower() != 'content-type'}
+            headers["Content-Type"] = "application/json"
+            logger.info("챗봇 서비스용 Content-Type 헤더 강제 설정: application/json")
         
         # 파일 업로드 처리
         if file and file.filename:
@@ -153,40 +170,49 @@ async def proxy_post(
             # 파일 업로드 요청 전송
             response = await factory.request(
                 method="POST",
-                path=path,
+                path=clean_path,
                 headers=headers,
                 files=files,
                 form_data=form_data  # ← None이면 data를 아예 안 보냄
             )
         else:
             # JSON 요청 처리
-            body_dict = None
+            body_dict = {}  # 기본값 설정
 
+            # 챗봇 서비스 특수 처리
+            is_chatbot = (service == ServiceType.CHATBOT)
+            
             # Form에서 JSON 데이터가 전송된 경우
             if json_data:
                 try:
-                    # 일반적인 경우 JSON 파싱
+                    # JSON 파싱 시도
                     parsed_data = json.loads(json_data)
                     
-                    # 챗봇 서비스인 경우 특별한 형식으로 변환
-                    if service == ServiceType.CHATBOT:
-                        # 이미 message 필드가 있는 경우
+                    if is_chatbot:
+                        # 챗봇 서비스 형식으로 변환
                         if isinstance(parsed_data, dict) and "message" in parsed_data:
+                            # 이미 올바른 형식이면 그대로 사용
                             body_dict = parsed_data
-                            # user_id가 없으면 추가
                             if "user_id" not in body_dict:
                                 body_dict["user_id"] = "123"
                         else:
-                            # 문자열이나 다른 형식의 데이터를 message로 변환
+                            # 다른 형식이면 message로 변환
+                            message_text = json_data
+                            if isinstance(parsed_data, dict) and len(parsed_data) > 0:
+                                first_key = next(iter(parsed_data))
+                                message_text = str(parsed_data[first_key])
+                            elif isinstance(parsed_data, str):
+                                message_text = parsed_data
+                            
                             body_dict = {
-                                "message": json_data,
+                                "message": message_text,
                                 "user_id": "123"
                             }
                     else:
                         body_dict = parsed_data
                 except json.JSONDecodeError:
-                    # JSON 파싱 실패 시 처리
-                    if service == ServiceType.CHATBOT:
+                    # 파싱 실패 시
+                    if is_chatbot:
                         body_dict = {
                             "message": json_data,
                             "user_id": "123"
@@ -197,56 +223,67 @@ async def proxy_post(
                 # 요청 본문에서 JSON 데이터 가져오기
                 body_bytes = await request.body()
                 if body_bytes:
+                    body_text = body_bytes.decode('utf-8', errors='replace')
+                    
                     try:
-                        parsed_data = json.loads(body_bytes.decode())
+                        # JSON 파싱 시도
+                        parsed_data = json.loads(body_text)
                         
-                        # 챗봇 서비스인 경우 특별한 형식으로 변환
-                        if service == ServiceType.CHATBOT:
-                            # 이미 message 필드가 있는 경우
+                        if is_chatbot:
+                            # 챗봇 서비스 형식으로 변환
                             if isinstance(parsed_data, dict) and "message" in parsed_data:
+                                # 이미 올바른 형식이면 그대로 사용
                                 body_dict = parsed_data
-                                # user_id가 없으면 추가
                                 if "user_id" not in body_dict:
                                     body_dict["user_id"] = "123"
                             else:
-                                # message가 없는 경우, 첫 번째 필드를 message로 사용
+                                # 다른 형식이면 message로 변환
+                                message_text = ""
                                 if isinstance(parsed_data, dict) and len(parsed_data) > 0:
                                     first_key = next(iter(parsed_data))
-                                    body_dict = {
-                                        "message": str(parsed_data[first_key]),
-                                        "user_id": "123"
-                                    }
+                                    message_text = str(parsed_data[first_key])
+                                elif isinstance(parsed_data, str):
+                                    message_text = parsed_data
                                 else:
-                                    # 다른 형식이면 전체를 문자열로 변환하여 message로 사용
-                                    body_dict = {
-                                        "message": body_bytes.decode(),
-                                        "user_id": "123"
-                                    }
+                                    message_text = body_text
+                                
+                                body_dict = {
+                                    "message": message_text,
+                                    "user_id": "123"
+                                }
                         else:
                             body_dict = parsed_data
                     except json.JSONDecodeError:
-                        if service == ServiceType.CHATBOT:
+                        # 파싱 실패 시
+                        if is_chatbot:
                             body_dict = {
-                                "message": body_bytes.decode(),
+                                "message": body_text,
                                 "user_id": "123"
                             }
                         else:
-                            body_dict = {"data": body_bytes.decode()}
-                else:
-                    if service == ServiceType.CHATBOT:
-                        body_dict = {
-                            "message": "",
-                            "user_id": "123"
-                        }
-                    else:
-                        body_dict = {}
+                            body_dict = {"data": body_text}
+                elif is_chatbot:
+                    # 빈 요청일 경우 챗봇 기본값
+                    body_dict = {
+                        "message": "",
+                        "user_id": "123"
+                    }
 
-            # JSON 요청 전송 (json= 사용)
+            # 디버깅 로그 추가
+            if is_chatbot:
+                logger.info(f"챗봇 서비스 요청 본문: {json.dumps(body_dict)}")
+                logger.info(f"챗봇 서비스 요청 헤더: {headers}")
+                # 이 부분은 이미 위에서 처리했으므로 제거
+                # if "content-type" not in {k.lower(): v for k, v in headers.items()}:
+                #     headers["Content-Type"] = "application/json"
+                #     logger.info("Content-Type 헤더 추가: application/json")
+
+            # JSON 요청 전송
             response = await factory.request(
                 method="POST",
-                path=path,
+                path=clean_path,
                 headers=headers,
-                json=body_dict  # ✅ 이 부분 중요
+                json=body_dict
             )
         
         # 응답 처리
