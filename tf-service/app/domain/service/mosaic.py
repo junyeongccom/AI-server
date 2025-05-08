@@ -11,16 +11,16 @@ logger = logging.getLogger("tf_main")
 # 환경 변수에서 경로 가져오기 (기본값 설정)
 UPLOAD_DIR = "./uploads"
 OUTPUT_DIR = "./output"
-CASCADE_PATH = "./app/data/haarcascade_frontalface_alt.xml"
+CASCADE_PATH = "./app/models/haarcascade_frontalface_alt.xml"
 
 # 대체 경로 시도
 if not os.path.exists(CASCADE_PATH):
-    alternative_path = os.path.join(os.getcwd(), "app", "data", "haarcascade_frontalface_alt.xml")
+    alternative_path = os.path.join(os.getcwd(), "app", "models", "haarcascade_frontalface_alt.xml")
     if os.path.exists(alternative_path):
         CASCADE_PATH = alternative_path
         logger.info(f"얼굴 인식 캐스케이드 파일 발견: {CASCADE_PATH}")
     else:
-        alternative_path = os.path.join(os.getcwd(), "data", "haarcascade_frontalface_alt.xml")
+        alternative_path = os.path.join(os.getcwd(), "models", "haarcascade_frontalface_alt.xml")
         if os.path.exists(alternative_path):
             CASCADE_PATH = alternative_path
             logger.info(f"얼굴 인식 캐스케이드 파일 발견: {CASCADE_PATH}")

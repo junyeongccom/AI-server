@@ -11,6 +11,7 @@ services:
       - CRIME_SERVICE_URL=http://crime-service:9002
       - NLP_SERVICE_URL=http://nlp-service:9004
       - TF_SERVICE_URL=http://tf-service:9005
+      - CHATBOT_SERVICE_URL=http://chatbot-service:9006
     networks:
       - ai-network
 
@@ -96,6 +97,21 @@ services:
       - ./tf-service/mnist:/mnist
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9005"]
 
+  # 챗봇 서비스 (9006 포트)
+  chatbot-service:
+    build:
+      context: ./chatbot-service
+      dockerfile: Dockerfile
+    container_name: chatbot
+    ports:
+      - "9006:9006"
+    networks:
+      - ai-network
+    env_file:
+      - ./chatbot-service/.env
+    volumes:
+      - ./chatbot-service:/app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9006", "--reload"]
 
 networks:
   ai-network:

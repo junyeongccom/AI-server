@@ -12,3 +12,8 @@ class MosaicResult(BaseModel):
     success: bool
     error: str = ""
     faces_detected: int = 0
+    
+class HandwrittenPredictionResponse(BaseModel):
+    predicted_digit: int
+    confidence: float
+    file_path: str

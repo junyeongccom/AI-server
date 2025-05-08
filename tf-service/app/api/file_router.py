@@ -7,8 +7,8 @@ from tensorflow import keras
 import numpy as np
 import shutil
 from PIL import Image
-from app.domain.controller.file_controller import process_upload_file
-from app.domain.model.file_schema import UploadResponse
+from app.domain.controller.file_controller import process_upload_file, process_handwritten_file
+from app.domain.model.file_schema import UploadResponse, HandwrittenPredictionResponse
 
 router = APIRouter()
 logger = logging.getLogger("tf_main")
@@ -87,7 +87,7 @@ async def get_mnist_sample():
             status_code=500
         )
 
-@router.post("/upload-handwritten")
+@router.post("/upload-handwritten", response_model=HandwrittenPredictionResponse)
 async def upload_handwritten(file: UploadFile = File(...)):
     """
     손글씨 숫자 이미지를 업로드하고 분류합니다.
@@ -97,65 +97,12 @@ async def upload_handwritten(file: UploadFile = File(...)):
     **Returns**:
     - **predicted_digit**: 예측된 숫자 (0-9)
     - **confidence**: 예측 확률 (0-1)
+    - **file_path**: 저장된 파일 경로
     """
     try:
-        # mnist 디렉토리 생성
-        mnist_dir = "/mnist"
-        os.makedirs(mnist_dir, exist_ok=True)
-        
-        # 파일 저장
-        file_path = os.path.join(mnist_dir, file.filename)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        logger.info(f"손글씨 이미지 업로드 완료: {file_path}")
-        
-        # 이미지 전처리
-        # 1. 이미지 로드 및 그레이스케일 변환
-        img = Image.open(file_path).convert('L')
-        
-        # 2. 28x28 크기로 리사이즈
-        img = img.resize((28, 28), Image.LANCZOS)
-        
-        # 3. 이미지를 NumPy 배열로 변환 (0-255)
-        img_array = np.array(img)
-        
-        # 4. 255로 나누어 정규화 (0-1)
-        img_array = img_array / 255.0
-        
-        # 5. 모델 입력 형태로 변환 (1, 28, 28)
-        img_array = img_array.reshape(1, 28, 28)
-        
-        # MNIST 모델 로드
-        model_path = os.path.join(os.getcwd(), "app", "models", "my_mnist_model.h5")
-        
-        # 모델 경로가 존재하지 않을 경우 대체 경로 시도
-        if not os.path.exists(model_path):
-            model_path = "/app/models/my_mnist_model.h5"
-            if not os.path.exists(model_path):
-                logger.warning(f"모델 파일을 찾을 수 없습니다: {model_path}")
-                return JSONResponse(
-                    content={"error": "MNIST 모델 파일을 찾을 수 없습니다."},
-                    status_code=500
-                )
-        
-        # 모델 로드
-        model = keras.models.load_model(model_path)
-        logger.info(f"MNIST 모델 로드 완료: {model_path}")
-        
-        # 예측
-        predictions = model.predict(img_array)
-        predicted_digit = np.argmax(predictions[0])
-        confidence = float(predictions[0][predicted_digit])
-        
-        logger.info(f"손글씨 숫자 예측 결과: {predicted_digit} (확률: {confidence:.4f})")
-        
-        # 결과 반환
-        return {
-            "predicted_digit": int(predicted_digit),
-            "confidence": confidence,
-            "file_path": file_path
-        }
+        # 컨트롤러 호출
+        result = await process_handwritten_file(file)
+        return result
     
     except Exception as e:
         logger.error(f"손글씨 분류 중 오류 발생: {str(e)}")
