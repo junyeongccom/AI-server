@@ -1,17 +1,16 @@
 from fastapi import FastAPI, APIRouter, Request, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from typing import Dict, Any, Optional, List, Union, Tuple
 from dotenv import load_dotenv
+from typing import Dict, Any, Optional
 import logging
 import sys
 from contextlib import asynccontextmanager
 import json
 from pydantic import BaseModel
-
-
 from app.domain.model.service_proxy_factory import ServiceProxyFactory
 from app.domain.model.service_type import ServiceType
+from app.domain.service.request_service import handle_request, process_response
 
 # ✅ 로깅 설정
 logging.basicConfig(
@@ -56,21 +55,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ 헤더 변환 함수 추가
-def convert_headers(headers: Union[List[Tuple[bytes, bytes]], Dict[str, str]]) -> Dict[str, str]:
-    """
-    헤더를 Dict[str, str] 형태로 변환하는 유틸리티 함수
-    
-    Args:
-        headers: [(b"key", b"value")] 형태의 List 또는 Dict[str, str]
-        
-    Returns:
-        Dict[str, str]: 변환된 헤더 딕셔너리
-    """
-    if isinstance(headers, list):
-        return {k.decode(): v.decode() for k, v in headers}
-    return headers
-
 # ✅ 메인 라우터 생성
 gateway_router = APIRouter(prefix="/ai/v1", tags=["Gateway API"])
 
@@ -83,31 +67,8 @@ async def proxy_get(
     request: Request
 ):
     try:
-        logger.info(f"GET 요청: {service.value}/{path}")
-        factory = ServiceProxyFactory(service_type=service)
-        
-        # 헤더를 딕셔너리로 변환
-        headers_dict = convert_headers(request.headers.raw)
-        
-        response = await factory.request(
-            method="GET",
-            path=path,
-            headers=headers_dict
-        )
-        
-        if response.status_code == 200:
-            try:
-                return JSONResponse(content=response.json(), status_code=response.status_code)
-            except Exception:
-                return JSONResponse(
-                    content={"message": "성공", "raw_response": response.text[:1000]},
-                    status_code=200
-                )
-        else:
-            return JSONResponse(
-                content={"error": f"서비스 오류: HTTP {response.status_code}", "details": response.text[:500]},
-                status_code=response.status_code
-            )
+        response = await handle_request(service, path, request, "GET")
+        return process_response(response)
     except Exception as e:
         logger.error(f"게이트웨이 오류: {str(e)}")
         return JSONResponse(
@@ -129,178 +90,8 @@ async def proxy_post(
     json_data: Optional[str] = Form(None, description="JSON 형식의 데이터 (선택 사항)")
 ):
     try:
-        logger.info(f"POST 요청: {service.value}/{path}")
-        
-        # 경로 정규화 (중복 슬래시 제거)
-        clean_path = path
-        while '//' in clean_path:
-            clean_path = clean_path.replace('//', '/')
-        
-        # 챗봇 서비스의 경우 경로 수정 (이전 코드 제거)
-        if service == ServiceType.CHATBOT:
-            logger.info(f"챗봇 서비스 경로: {clean_path}")
-        
-        factory = ServiceProxyFactory(service_type=service)
-        
-        # 헤더 처리
-        headers = {k: v for k, v in request.headers.items() if k.lower() not in ['content-length', 'host']}
-        
-        # 챗봇 서비스의 경우 Content-Type 헤더를 명시적으로 설정
-        if service == ServiceType.CHATBOT:
-            # multipart/form-data를 application/json으로 변경
-            headers = {k: v for k, v in headers.items() if k.lower() != 'content-type'}
-            headers["Content-Type"] = "application/json"
-            logger.info("챗봇 서비스용 Content-Type 헤더 강제 설정: application/json")
-        
-        # 파일 업로드 처리
-        if file and file.filename:
-            # 파일 데이터 준비
-            file_content = await file.read()
-            await file.seek(0)
-            files = {"file": (file.filename, file_content, file.content_type)}
-            
-            # JSON 데이터 준비 (있는 경우)
-            form_data = None  # ← None으로 초기화
-            if json_data:
-                try:
-                    form_data = json.loads(json_data)
-                except:
-                    form_data = {"data": json_data}
-            
-            # 파일 업로드 요청 전송
-            response = await factory.request(
-                method="POST",
-                path=clean_path,
-                headers=headers,
-                files=files,
-                form_data=form_data  # ← None이면 data를 아예 안 보냄
-            )
-        else:
-            # JSON 요청 처리
-            body_dict = {}  # 기본값 설정
-
-            # 챗봇 서비스 특수 처리
-            is_chatbot = (service == ServiceType.CHATBOT)
-            
-            # Form에서 JSON 데이터가 전송된 경우
-            if json_data:
-                try:
-                    # JSON 파싱 시도
-                    parsed_data = json.loads(json_data)
-                    
-                    if is_chatbot:
-                        # 챗봇 서비스 형식으로 변환
-                        if isinstance(parsed_data, dict) and "message" in parsed_data:
-                            # 이미 올바른 형식이면 그대로 사용
-                            body_dict = parsed_data
-                            if "user_id" not in body_dict:
-                                body_dict["user_id"] = "123"
-                        else:
-                            # 다른 형식이면 message로 변환
-                            message_text = json_data
-                            if isinstance(parsed_data, dict) and len(parsed_data) > 0:
-                                first_key = next(iter(parsed_data))
-                                message_text = str(parsed_data[first_key])
-                            elif isinstance(parsed_data, str):
-                                message_text = parsed_data
-                            
-                            body_dict = {
-                                "message": message_text,
-                                "user_id": "123"
-                            }
-                    else:
-                        body_dict = parsed_data
-                except json.JSONDecodeError:
-                    # 파싱 실패 시
-                    if is_chatbot:
-                        body_dict = {
-                            "message": json_data,
-                            "user_id": "123"
-                        }
-                    else:
-                        body_dict = {"data": json_data}
-            else:
-                # 요청 본문에서 JSON 데이터 가져오기
-                body_bytes = await request.body()
-                if body_bytes:
-                    body_text = body_bytes.decode('utf-8', errors='replace')
-                    
-                    try:
-                        # JSON 파싱 시도
-                        parsed_data = json.loads(body_text)
-                        
-                        if is_chatbot:
-                            # 챗봇 서비스 형식으로 변환
-                            if isinstance(parsed_data, dict) and "message" in parsed_data:
-                                # 이미 올바른 형식이면 그대로 사용
-                                body_dict = parsed_data
-                                if "user_id" not in body_dict:
-                                    body_dict["user_id"] = "123"
-                            else:
-                                # 다른 형식이면 message로 변환
-                                message_text = ""
-                                if isinstance(parsed_data, dict) and len(parsed_data) > 0:
-                                    first_key = next(iter(parsed_data))
-                                    message_text = str(parsed_data[first_key])
-                                elif isinstance(parsed_data, str):
-                                    message_text = parsed_data
-                                else:
-                                    message_text = body_text
-                                
-                                body_dict = {
-                                    "message": message_text,
-                                    "user_id": "123"
-                                }
-                        else:
-                            body_dict = parsed_data
-                    except json.JSONDecodeError:
-                        # 파싱 실패 시
-                        if is_chatbot:
-                            body_dict = {
-                                "message": body_text,
-                                "user_id": "123"
-                            }
-                        else:
-                            body_dict = {"data": body_text}
-                elif is_chatbot:
-                    # 빈 요청일 경우 챗봇 기본값
-                    body_dict = {
-                        "message": "",
-                        "user_id": "123"
-                    }
-
-            # 디버깅 로그 추가
-            if is_chatbot:
-                logger.info(f"챗봇 서비스 요청 본문: {json.dumps(body_dict)}")
-                logger.info(f"챗봇 서비스 요청 헤더: {headers}")
-                # 이 부분은 이미 위에서 처리했으므로 제거
-                # if "content-type" not in {k.lower(): v for k, v in headers.items()}:
-                #     headers["Content-Type"] = "application/json"
-                #     logger.info("Content-Type 헤더 추가: application/json")
-
-            # JSON 요청 전송
-            response = await factory.request(
-                method="POST",
-                path=clean_path,
-                headers=headers,
-                json=body_dict
-            )
-        
-        # 응답 처리
-        if response.status_code < 400:
-            try:
-                return JSONResponse(content=response.json(), status_code=response.status_code)
-            except:
-                return JSONResponse(
-                    content={"message": "성공", "raw_response": response.text[:1000]},
-                    status_code=response.status_code
-                )
-        else:
-            return JSONResponse(
-                content={"error": f"서비스 오류: HTTP {response.status_code}", "details": response.text[:500]},
-                status_code=response.status_code
-            )
-            
+        response = await handle_request(service, path, request, "POST", json_data, file)
+        return process_response(response)
     except Exception as e:
         logger.error(f"게이트웨이 오류: {str(e)}")
         return JSONResponse(
@@ -312,112 +103,40 @@ async def proxy_post(
 @gateway_router.put("/{service}/{path:path}", summary="PUT 프록시")
 async def proxy_put(service: ServiceType, path: str, request: Request):
     try:
-        factory = ServiceProxyFactory(service_type=service)
-        # 헤더를 딕셔너리로 변환
-        headers_dict = convert_headers(request.headers.raw)
-        
-        # JSON 데이터 추출
-        body_bytes = await request.body()
-        if body_bytes:
-            try:
-                body_dict = json.loads(body_bytes.decode())
-                response = await factory.request(
-                    method="PUT",
-                    path=path,
-                    headers=headers_dict,
-                    json=body_dict
-                )
-            except json.JSONDecodeError:
-                response = await factory.request(
-                    method="PUT",
-                    path=path,
-                    headers=headers_dict,
-                    body=body_bytes
-                )
-        else:
-            response = await factory.request(
-                method="PUT",
-                path=path,
-                headers=headers_dict
-            )
-            
-        return JSONResponse(content=response.json(), status_code=response.status_code)
+        response = await handle_request(service, path, request, "PUT")
+        return process_response(response)
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        logger.error(f"게이트웨이 오류: {str(e)}")
+        return JSONResponse(
+            content={"error": str(e)},
+            status_code=500
+        )
 
 # DELETE
 @gateway_router.delete("/{service}/{path:path}", summary="DELETE 프록시")
 async def proxy_delete(service: ServiceType, path: str, request: Request):
     try:
-        factory = ServiceProxyFactory(service_type=service)
-        # 헤더를 딕셔너리로 변환
-        headers_dict = convert_headers(request.headers.raw)
-        
-        # JSON 데이터 추출
-        body_bytes = await request.body()
-        if body_bytes:
-            try:
-                body_dict = json.loads(body_bytes.decode())
-                response = await factory.request(
-                    method="DELETE",
-                    path=path,
-                    headers=headers_dict,
-                    json=body_dict
-                )
-            except json.JSONDecodeError:
-                response = await factory.request(
-                    method="DELETE",
-                    path=path,
-                    headers=headers_dict,
-                    body=body_bytes
-                )
-        else:
-            response = await factory.request(
-                method="DELETE",
-                path=path,
-                headers=headers_dict
-            )
-            
-        return JSONResponse(content=response.json(), status_code=response.status_code)
+        response = await handle_request(service, path, request, "DELETE")
+        return process_response(response)
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        logger.error(f"게이트웨이 오류: {str(e)}")
+        return JSONResponse(
+            content={"error": str(e)},
+            status_code=500
+        )
 
 # PATCH
 @gateway_router.patch("/{service}/{path:path}", summary="PATCH 프록시")
 async def proxy_patch(service: ServiceType, path: str, request: Request):
     try:
-        factory = ServiceProxyFactory(service_type=service)
-        # 헤더를 딕셔너리로 변환
-        headers_dict = convert_headers(request.headers.raw)
-        
-        # JSON 데이터 추출
-        body_bytes = await request.body()
-        if body_bytes:
-            try:
-                body_dict = json.loads(body_bytes.decode())
-                response = await factory.request(
-                    method="PATCH",
-                    path=path,
-                    headers=headers_dict,
-                    json=body_dict
-                )
-            except json.JSONDecodeError:
-                response = await factory.request(
-                    method="PATCH",
-                    path=path,
-                    headers=headers_dict,
-                    body=body_bytes
-                )
-        else:
-            response = await factory.request(
-                method="PATCH",
-                path=path,
-                headers=headers_dict
-            )
-            
-        return JSONResponse(content=response.json(), status_code=response.status_code)
+        response = await handle_request(service, path, request, "PATCH")
+        return process_response(response)
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        logger.error(f"게이트웨이 오류: {str(e)}")
+        return JSONResponse(
+            content={"error": str(e)},
+            status_code=500
+        )
 
 # ✅ 메인 라우터 등록
 app.include_router(gateway_router)
