@@ -2,7 +2,7 @@ from typing import Dict, Any, Tuple, List, Union
 from fastapi import HTTPException, status
 import httpx
 import logging
-import json
+import json as json_module
 from app.domain.model.service_type import SERVICE_URLS, ServiceType
 
 # 로깅 설정
@@ -28,7 +28,8 @@ class ServiceProxyFactory:
         headers: Union[List[Tuple[bytes, bytes]], Dict[str, str]] = None,
         body: Any = None,
         files: Dict[str, Tuple[str, bytes, str]] = None,
-        form_data: Dict[str, str] = None
+        form_data: Dict[str, str] = None,
+        json: Any = None
     ):
         url = f"{self.base_url}/{path}" if not path.startswith("http") else path
         logger.info(f"요청 URL: {url}")
@@ -57,14 +58,21 @@ class ServiceProxyFactory:
                             files=files,
                             data=form_data
                         )
+                    elif json is not None:
+                        logger.info(f"POST JSON 요청 전송(직접 json 파라미터 사용): {url}")
+                        response = await client.post(
+                            url,
+                            headers=request_headers,
+                            json=json
+                        )
                     else:
                         logger.info(f"POST JSON 요청 전송: {url}")
                         json_data = None
                         if body:
                             if isinstance(body, str):
                                 try:
-                                    json_data = json.loads(body)
-                                except json.JSONDecodeError:
+                                    json_data = json_module.loads(body)
+                                except json_module.JSONDecodeError:
                                     response = await client.post(url, headers=request_headers, content=body)
                                     return response
                             else:
@@ -78,13 +86,22 @@ class ServiceProxyFactory:
                     response = await client.get(url, headers=request_headers)
 
                 elif method.upper() == 'PUT':
-                    response = await client.put(url, headers=request_headers, content=body)
+                    if json is not None:
+                        response = await client.put(url, headers=request_headers, json=json)
+                    else:
+                        response = await client.put(url, headers=request_headers, content=body)
 
                 elif method.upper() == 'DELETE':
-                    response = await client.delete(url, headers=request_headers, content=body)
+                    if json is not None:
+                        response = await client.delete(url, headers=request_headers, json=json)
+                    else:
+                        response = await client.delete(url, headers=request_headers, content=body)
 
                 elif method.upper() == 'PATCH':
-                    response = await client.patch(url, headers=request_headers, content=body)
+                    if json is not None:
+                        response = await client.patch(url, headers=request_headers, json=json)
+                    else:
+                        response = await client.patch(url, headers=request_headers, content=body)
 
                 else:
                     error_msg = f"지원하지 않는 HTTP 메서드: {method}"
